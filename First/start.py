@@ -47,7 +47,7 @@ def send_game_info(message):
             # Запрашиваем страницу игры
             response = requests.get(steam_url)
 
-            print(current_game_index, len(steam_urls))
+            print(current_game_index + 1, len(steam_urls))
             if response.status_code == 200:
                 # Используем BeautifulSoup для парсинга HTML
                 soup = BeautifulSoup(response.text, 'html.parser')
@@ -170,7 +170,6 @@ def get_rating_on_Metacritic(soup):
             name_metacritic = name_metacritic.text.capitalize()
             value_metacritic = soup.find('div', {'class': 'score high'}).text.strip()
             link_metacritic = soup.find('div', {'id': 'game_area_metalink'})
-            print(link_metacritic)
             link_metacritic = link_metacritic.find('a').get('href')
             info_metacritic = f"\n{name_metacritic}: <a href=\"{link_metacritic}\">{value_metacritic}%</a>\n"
 
@@ -239,9 +238,13 @@ def get_title_rating(soup):
                 title_rating_number = '0+'
 
             title_rating_descriptors = soup.find('p', {'class': 'descriptorText'})
-            title_rating_descriptors = title_rating_descriptors.get_text(", ", strip=True)
+            if title_rating_descriptors:
+                title_rating_descriptors = title_rating_descriptors.get_text(", ", strip=True)
+                title_rating_descriptors = f"({title_rating_descriptors})"
+            else:
+                title_rating_descriptors = ""
 
-            title_rating = (f"{title_rating_name} {title_rating_number} ({title_rating_descriptors})")
+            title_rating = (f"{title_rating_name} {title_rating_number} {title_rating_descriptors}")
 
             return title_rating
         else:
