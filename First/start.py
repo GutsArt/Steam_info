@@ -4,13 +4,16 @@ import telebot
 import json
 # для названий функций
 import inspect
+
 # Ваш токен Telegram бота
 TOKEN = '6857842585:AAFC_LLP4J2lyWtiQV-rWn7GVnhAplVpT0o'
 bot = telebot.TeleBot(TOKEN)
 
-steam_urls = ['https://store.steampowered.com/app/238010/Deus_Ex_Human_Revolution__Directors_Cut/',
+steam_urls = ['https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
+              'https://store.steampowered.com/app/217980/Dishonored/',
+              'https://store.steampowered.com/app/22490/Fallout_New_Vegas/',
+              'https://store.steampowered.com/app/238010/Deus_Ex_Human_Revolution__Directors_Cut/',
               'https://store.steampowered.com/app/632470/Disco_Elysium__The_Final_Cut/',
-              'https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
               'https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/',
               'https://store.steampowered.com/app/1091500/Cyberpunk_2077/',
               'https://store.steampowered.com/app/292030/_3/',
@@ -21,8 +24,6 @@ steam_urls = ['https://store.steampowered.com/app/238010/Deus_Ex_Human_Revolutio
               'https://store.steampowered.com/app/2050650/Resident_Evil_4/',
               'https://store.steampowered.com/app/1687950/Persona_5_Royal/',
               'https://store.steampowered.com/app/489830/The_Elder_Scrolls_V_Skyrim_Special_Edition/',
-              'https://store.steampowered.com/app/217980/Dishonored/',
-              'https://store.steampowered.com/app/22490/Fallout_New_Vegas/',
               'https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/391540/Undertale/',
               ]
@@ -101,6 +102,7 @@ def get_full_inform(soup):
 
     return full_inform
 
+
 def get_language_name(code):
     language_names = {
         'ru': 'russian',
@@ -138,19 +140,20 @@ def get_genre_and_franchise_on_Steam(soup):
 
     return formatted_genre, formatted_series
 
-# (list index out of range)
+
 def get_game_rating_on_Steam(soup):
     try:
-        key = soup.find_all('div', {'class': 'subtitle column all'})[1].text.strip()
-        if len(key_elements) >= 2:
-            value0 = soup.find_all('span', {'class': 'game_review_summary'})[1].text.strip()
+        key_elements = soup.find_all('div', {'class': 'subtitle column all'})
+        value_elements = soup.find_all('span', {'class': 'game_review_summary'})
+
+        if len(key_elements) > 1 and len(value_elements) > 1:
+            key = key_elements[1].text.strip()
+            value0 = value_elements[1].text.strip()
             value1 = soup.find_all('span', {'class': 'responsive_hidden'})[1].text.strip()
-            value2 = soup.find_all('span',
-                                   {'class': 'nonresponsive_hidden responsive_reviewdesc'})[1].text
+            value2 = soup.find_all('span', {'class': 'nonresponsive_hidden responsive_reviewdesc'})[1].text
             value2 = value2.split('<br>')[0].strip()
 
             rating = f"\n{key} {value0} {value1} {value2}\n"
-
             return rating
         else:
             return None
@@ -158,6 +161,7 @@ def get_game_rating_on_Steam(soup):
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
         return None
+
 
 # ('NoneType' object has no attribute 'text')
 def get_rating_on_Metacritic(soup):
@@ -210,7 +214,8 @@ def get_developer_and_publisher_and_release_info(soup, label_class='grid_label',
     else:
         return None
 
-#
+
+# ('NoneType' object has no attribute 'get_text')
 def get_title_rating(soup):
     try:
         title_rating_name = soup.find('div', {'class': 'game_rating_agency'})
