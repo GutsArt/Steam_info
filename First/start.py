@@ -163,13 +163,14 @@ def get_game_rating_on_Steam(soup):
         return None
 
 
-# ('NoneType' object has no attribute 'text')
 def get_rating_on_Metacritic(soup):
     try:
-        name_metacritic = soup.find('div', {'class': 'metacritic'}).text.capitalize()
+        name_metacritic = soup.find('div', {'class': 'metacritic'})
         if name_metacritic:
+            name_metacritic = name_metacritic.text.capitalize()
             value_metacritic = soup.find('div', {'class': 'score high'}).text.strip()
             link_metacritic = soup.find('div', {'id': 'game_area_metalink'})
+            print(link_metacritic)
             link_metacritic = link_metacritic.find('a').get('href')
             info_metacritic = f"\n{name_metacritic}: <a href=\"{link_metacritic}\">{value_metacritic}%</a>\n"
 
