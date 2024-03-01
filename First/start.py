@@ -40,8 +40,6 @@ def send_game_info(message):
             lang_name = get_language_name(lang_code)
             # ?l=russian
             steam_url = f'{steam_urls[current_game_index]}?l={lang_name}'
-            # print(message.from_user.language_code)
-            # print(lang_name)
             print(steam_url)
 
             # Запрашиваем страницу игры
