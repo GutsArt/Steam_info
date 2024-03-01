@@ -27,7 +27,6 @@ steam_urls = ['https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
               'https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/391540/Undertale/',
               ]
-# ?l=russian
 current_game_index = 0
 
 
@@ -39,6 +38,7 @@ def send_game_info(message):
         if current_game_index < len(steam_urls):
             lang_code = message.from_user.language_code if message.from_user.language_code else "en"
             lang_name = get_language_name(lang_code)
+            # ?l=russian
             steam_url = f'{steam_urls[current_game_index]}?l={lang_name}'
             # print(message.from_user.language_code)
             # print(lang_name)
@@ -91,14 +91,14 @@ def get_full_inform(soup):
 
     full_inform = (f"<code >{title}\n</code>"
                    f"{description}\n"
-                   f"{rating_on_Steam if rating_on_Steam else ''}"
-                   f"{rating_on_Metacritic if rating_on_Metacritic else ''}"
+                   f"{rating_on_Steam}"
+                   f"{rating_on_Metacritic}"
                    f"\n{release_date_info}"
                    f"\n{developer_info}"
                    f"\n{publisher_info}"
                    f"\n{genre}"
-                   f"\n{franchise if franchise else ''}"
-                   f"\n{title_rating if title_rating else ''}")
+                   f"\n{franchise}"
+                   f"\n{title_rating}")
 
     return full_inform
 
@@ -126,7 +126,7 @@ def get_genre_and_franchise_on_Steam(soup):
         formatted_series = f"{series_tag.text} {series_text}"
     else:
         print("Тег 'Серия игр' не найден.")
-        formatted_series = None
+        formatted_series = ""
 
     # Ищем второй тег <b> (Жанр)
     genre_name = details_quantity[1]
@@ -156,7 +156,7 @@ def get_game_rating_on_Steam(soup):
             rating = f"\n{key} {value0} {value1} {value2}\n"
             return rating
         else:
-            return None
+            return ""
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
@@ -175,7 +175,7 @@ def get_rating_on_Metacritic(soup):
 
             return info_metacritic
         else:
-            return None
+            return ""
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
@@ -212,7 +212,7 @@ def get_developer_and_publisher_and_release_info(soup, label_class='grid_label',
 
         return developer_info, publisher_info, date_of_release
     else:
-        return None
+        return ""
 
 
 # ('NoneType' object has no attribute 'get_text')
@@ -248,7 +248,7 @@ def get_title_rating(soup):
 
             return title_rating
         else:
-            return None
+            return ""
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
