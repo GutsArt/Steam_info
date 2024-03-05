@@ -9,7 +9,8 @@ import inspect
 TOKEN = '6857842585:AAFC_LLP4J2lyWtiQV-rWn7GVnhAplVpT0o'
 bot = telebot.TeleBot(TOKEN)
 
-steam_urls = ['https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
+steam_urls = ['https://store.steampowered.com/app/550/Left_4_Dead_2/',
+              'https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
               'https://store.steampowered.com/app/217980/Dishonored/',
               'https://store.steampowered.com/app/22490/Fallout_New_Vegas/',
               'https://store.steampowered.com/app/238010/Deus_Ex_Human_Revolution__Directors_Cut/',
@@ -24,7 +25,6 @@ steam_urls = ['https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
               'https://store.steampowered.com/app/2050650/Resident_Evil_4/',
               'https://store.steampowered.com/app/1687950/Persona_5_Royal/',
               'https://store.steampowered.com/app/489830/The_Elder_Scrolls_V_Skyrim_Special_Edition/',
-              'https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/391540/Undertale/',
               ]
 # ?l=russian
@@ -171,7 +171,7 @@ def get_rating_on_Metacritic(soup):
         name_metacritic = soup.find('div', {'class': 'metacritic'})
         if name_metacritic:
             name_metacritic = name_metacritic.text.capitalize()
-            value_metacritic = soup.find('div', {'class': 'score high'}).text.strip()
+            value_metacritic = soup.find('div', {'class': 'score'}).text.strip()
             link_metacritic = soup.find('div', {'id': 'game_area_metalink'})
             link_metacritic = link_metacritic.find('a').get('href')
             info_metacritic = f"\n{name_metacritic}: <a href=\"{link_metacritic}\">{value_metacritic}%</a>\n"
@@ -289,6 +289,7 @@ def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacr
             # Переходим на новую строку перед добавлением новой записи
             json_file.write("\n")
             json.dump(data, json_file, ensure_ascii=False)
+
 
 def load_data_from_json(file_path):
     try:
