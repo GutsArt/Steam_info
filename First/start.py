@@ -100,6 +100,8 @@ def get_full_inform(soup):
                    f"\n{franchise if franchise else ''}"
                    f"\n{title_rating if title_rating else ''}")
 
+    get_about_this_game(soup)
+
     save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
                            publisher_info, genre, franchise, title_rating)
 
@@ -260,6 +262,34 @@ def get_title_rating(soup):
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
         return None
+
+
+# поиск img, br, li переделать в отдельные сообщения img1 и текс после фото это 1 сообщение,img2 и текс после фото это 2 сообщение и т.д.
+def get_about_this_game(soup):
+    game_area_description = soup.find('div', {'id': 'game_area_description'})
+
+    if game_area_description:
+        print(game_area_description)
+
+        about_game_text = game_area_description.get_text("\n", strip=True)
+        # # Извлекаем текст из блока, заменяя теги при необходимости
+        # about_game_text = ""
+        # for tag in game_area_description.contents:
+        #     if tag.name == 'h2':
+        #         about_game_text += f"\n{tag.text.strip()}\n"
+        #     elif tag.name == 'br':
+        #         about_game_text += '\n'
+        #     elif tag.name == 'p':
+        #         about_game_text += f"\n{tag.text.strip()}\n"
+        #     elif tag.name == 'ul':
+        #         # Итерируем по элементам списка и форматируем как требуется
+        #         for li_tag in tag.find_all('li'):
+        #             about_game_text += f"* {li_tag.text.strip()}\n"
+        #
+        print(about_game_text)
+        return about_game_text.strip()
+
+    return None
 
 
 def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
