@@ -166,18 +166,19 @@ def get_rating_on_Metacritic(soup):
         name_metacritic = soup.find('div', {'class': 'metacritic'})
         if name_metacritic:
             name_metacritic = name_metacritic.text.capitalize()
-            value_metacritic = soup.find('div', {'class': 'score high'}).text.strip()
+            score_element = soup.find('div', {'class': 'score'})
+            value_metacritic = score_element.text.strip()
+
             link_metacritic = soup.find('div', {'id': 'game_area_metalink'})
             link_metacritic = link_metacritic.find('a').get('href')
             info_metacritic = f"\n{name_metacritic}: <a href=\"{link_metacritic}\">{value_metacritic}%</a>\n"
-
             return info_metacritic
         else:
-            return ""
+            return None
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
-        return None
+        return "\nRating on Metacritic: Not available\n"
 
 
 # def get_release_date(soup):
@@ -222,18 +223,19 @@ def get_title_rating(soup):
 
             title_rating_number_tag = soup.find('div', {'class': 'game_rating_icon'})
             title_rating_number = title_rating_number_tag.text.strip()
-            if '18' in title_rating_number_tag.find('img', src=True)['src']:
-                title_rating_number = '18+'
-            elif '16' in title_rating_number_tag.find('img', src=True)['src']:
-                title_rating_number = '16+'
-            elif '12' in title_rating_number_tag.find('img', src=True)['src']:
-                title_rating_number = '12+'
-            elif '7' in title_rating_number_tag.find('img', src=True)['src']:
-                title_rating_number = '7+'
-            elif '3' in title_rating_number_tag.find('img', src=True)['src']:
-                title_rating_number = '3+'
-            else:
-                title_rating_number = '0+'
+
+            rating_mapping = {
+                '18': '18+',
+                '16': '16+',
+                '12': '12+',
+                '7': '7+',
+                '3': '3+',
+            }
+
+            rating_key = next(
+                (key for key in rating_mapping.keys() if key in title_rating_number_tag.find('img', src=True)['src']),
+                None)
+            title_rating_number = rating_mapping.get(rating_key, '0+')
 
             title_rating_descriptors = soup.find('p', {'class': 'descriptorText'})
             if title_rating_descriptors:
@@ -242,11 +244,10 @@ def get_title_rating(soup):
             else:
                 title_rating_descriptors = ""
 
-            title_rating = (f"{title_rating_name} {title_rating_number} {title_rating_descriptors}")
-
+            title_rating = f"{title_rating_name} {title_rating_number} {title_rating_descriptors}"
             return title_rating
         else:
-            return ""
+            return None
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
