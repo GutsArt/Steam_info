@@ -27,6 +27,7 @@ steam_urls = ['https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
               'https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/391540/Undertale/',
               ]
+# ?l=russian
 current_game_index = 0
 
 
@@ -38,8 +39,9 @@ def send_game_info(message):
         if current_game_index < len(steam_urls):
             lang_code = message.from_user.language_code if message.from_user.language_code else "en"
             lang_name = get_language_name(lang_code)
-            # ?l=russian
             steam_url = f'{steam_urls[current_game_index]}?l={lang_name}'
+            # print(message.from_user.language_code)
+            # print(lang_name)
             print(steam_url)
 
             # Запрашиваем страницу игры
@@ -89,14 +91,17 @@ def get_full_inform(soup):
 
     full_inform = (f"<code >{title}\n</code>"
                    f"{description}\n"
-                   f"{rating_on_Steam}"
-                   f"{rating_on_Metacritic}"
+                   f"{rating_on_Steam if rating_on_Steam else ''}"
+                   f"{rating_on_Metacritic if rating_on_Metacritic else ''}"
                    f"\n{release_date_info}"
                    f"\n{developer_info}"
                    f"\n{publisher_info}"
                    f"\n{genre}"
-                   f"\n{franchise}"
-                   f"\n{title_rating}")
+                   f"\n{franchise if franchise else ''}"
+                   f"\n{title_rating if title_rating else ''}")
+
+    save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
+                           publisher_info, genre, franchise, title_rating)
 
     return full_inform
 
@@ -124,7 +129,7 @@ def get_genre_and_franchise_on_Steam(soup):
         formatted_series = f"{series_tag.text} {series_text}"
     else:
         print("Тег 'Серия игр' не найден.")
-        formatted_series = ""
+        formatted_series = None
 
     # Ищем второй тег <b> (Жанр)
     genre_name = details_quantity[1]
@@ -144,7 +149,9 @@ def get_game_rating_on_Steam(soup):
         key_elements = soup.find_all('div', {'class': 'subtitle column all'})
         value_elements = soup.find_all('span', {'class': 'game_review_summary'})
 
-        if len(key_elements) > 1 and len(value_elements) > 1:
+        print(key_elements, "\n", value_elements)
+
+        if len(key_elements) > 1 and len(value_elements) > 5:
             key = key_elements[1].text.strip()
             value0 = value_elements[1].text.strip()
             value1 = soup.find_all('span', {'class': 'responsive_hidden'})[1].text.strip()
@@ -154,7 +161,7 @@ def get_game_rating_on_Steam(soup):
             rating = f"\n{key} {value0} {value1} {value2}\n"
             return rating
         else:
-            return ""
+            return None
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
@@ -166,19 +173,18 @@ def get_rating_on_Metacritic(soup):
         name_metacritic = soup.find('div', {'class': 'metacritic'})
         if name_metacritic:
             name_metacritic = name_metacritic.text.capitalize()
-            score_element = soup.find('div', {'class': 'score'})
-            value_metacritic = score_element.text.strip()
-
+            value_metacritic = soup.find('div', {'class': 'score high'}).text.strip()
             link_metacritic = soup.find('div', {'id': 'game_area_metalink'})
             link_metacritic = link_metacritic.find('a').get('href')
             info_metacritic = f"\n{name_metacritic}: <a href=\"{link_metacritic}\">{value_metacritic}%</a>\n"
+
             return info_metacritic
         else:
             return None
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
-        return "\nRating on Metacritic: Not available\n"
+        return None
 
 
 # def get_release_date(soup):
@@ -211,7 +217,7 @@ def get_developer_and_publisher_and_release_info(soup, label_class='grid_label',
 
         return developer_info, publisher_info, date_of_release
     else:
-        return ""
+        return None
 
 
 # ('NoneType' object has no attribute 'get_text')
@@ -223,19 +229,18 @@ def get_title_rating(soup):
 
             title_rating_number_tag = soup.find('div', {'class': 'game_rating_icon'})
             title_rating_number = title_rating_number_tag.text.strip()
-
-            rating_mapping = {
-                '18': '18+',
-                '16': '16+',
-                '12': '12+',
-                '7': '7+',
-                '3': '3+',
-            }
-
-            rating_key = next(
-                (key for key in rating_mapping.keys() if key in title_rating_number_tag.find('img', src=True)['src']),
-                None)
-            title_rating_number = rating_mapping.get(rating_key, '0+')
+            if '18' in title_rating_number_tag.find('img', src=True)['src']:
+                title_rating_number = '18+'
+            elif '16' in title_rating_number_tag.find('img', src=True)['src']:
+                title_rating_number = '16+'
+            elif '12' in title_rating_number_tag.find('img', src=True)['src']:
+                title_rating_number = '12+'
+            elif '7' in title_rating_number_tag.find('img', src=True)['src']:
+                title_rating_number = '7+'
+            elif '3' in title_rating_number_tag.find('img', src=True)['src']:
+                title_rating_number = '3+'
+            else:
+                title_rating_number = '0+'
 
             title_rating_descriptors = soup.find('p', {'class': 'descriptorText'})
             if title_rating_descriptors:
@@ -244,7 +249,8 @@ def get_title_rating(soup):
             else:
                 title_rating_descriptors = ""
 
-            title_rating = f"{title_rating_name} {title_rating_number} {title_rating_descriptors}"
+            title_rating = (f"{title_rating_name} {title_rating_number} {title_rating_descriptors}")
+
             return title_rating
         else:
             return None
@@ -252,6 +258,47 @@ def get_title_rating(soup):
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
         return None
+
+
+def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
+                           publisher_info, genre, franchise, title_rating):
+    # Пытаемся загрузить существующий JSON-файл
+    try:
+        with open("full_info.json", "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+    except FileNotFoundError:
+        # Если файл не найден, создаем новый словарь
+        data = {}
+
+    # if "full_name" not in data or data["full_name"] != title:
+    if title not in data:
+        # Обновляем словарь с новой информацией
+        data.update({
+            "full_name": title,
+            "description": description,
+            "rating_on_Steam": rating_on_Steam,
+            "rating_on_Metacritic": rating_on_Metacritic,
+            "release_date_info": release_date_info,
+            "developer_info": developer_info,
+            "publisher_info": publisher_info,
+            "genre": genre,
+            "franchise": franchise,
+            "title_rating": title_rating
+        })
+
+        # Записываем обновленный словарь в JSON-файл с режимом добавления ("a")
+        with open("full_info.json", "a", encoding="utf-8") as json_file:
+            # Переходим на новую строку перед добавлением новой записи
+            json_file.write("\n")
+            json.dump(data, json_file, ensure_ascii=False)
+
+def load_data_from_json(file_path):
+    try:
+        with open(file_path, "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+        return data
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
 
 # Запускаем бота
