@@ -149,8 +149,6 @@ def get_game_rating_on_Steam(soup):
         key_elements = soup.find_all('div', {'class': 'subtitle column all'})
         value_elements = soup.find_all('span', {'class': 'game_review_summary'})
 
-        print(key_elements, "\n", value_elements)
-
         if len(key_elements) > 1 and len(value_elements) > 5:
             key = key_elements[1].text.strip()
             value0 = value_elements[1].text.strip()
