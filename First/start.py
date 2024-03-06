@@ -9,7 +9,8 @@ import inspect
 TOKEN = '6857842585:AAFC_LLP4J2lyWtiQV-rWn7GVnhAplVpT0o'
 bot = telebot.TeleBot(TOKEN)
 
-steam_urls = ['https://store.steampowered.com/app/550/Left_4_Dead_2/',
+steam_urls = ['https://store.steampowered.com/app/391540/Undertale/',
+              'https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
               'https://store.steampowered.com/app/217980/Dishonored/',
               'https://store.steampowered.com/app/22490/Fallout_New_Vegas/',
@@ -25,7 +26,6 @@ steam_urls = ['https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/2050650/Resident_Evil_4/',
               'https://store.steampowered.com/app/1687950/Persona_5_Royal/',
               'https://store.steampowered.com/app/489830/The_Elder_Scrolls_V_Skyrim_Special_Edition/',
-              'https://store.steampowered.com/app/391540/Undertale/',
               ]
 # ?l=russian
 current_game_index = 0
@@ -271,24 +271,20 @@ def get_about_this_game(soup):
     if game_area_description:
         print(game_area_description)
 
-        about_game_text = game_area_description.get_text("\n", strip=True)
-        # # Извлекаем текст из блока, заменяя теги при необходимости
-        # about_game_text = ""
-        # for tag in game_area_description.contents:
-        #     if tag.name == 'h2':
-        #         about_game_text += f"\n{tag.text.strip()}\n"
-        #     elif tag.name == 'br':
-        #         about_game_text += '\n'
-        #     elif tag.name == 'p':
-        #         about_game_text += f"\n{tag.text.strip()}\n"
-        #     elif tag.name == 'ul':
-        #         # Итерируем по элементам списка и форматируем как требуется
-        #         for li_tag in tag.find_all('li'):
-        #             about_game_text += f"* {li_tag.text.strip()}\n"
-        #
-        print(about_game_text)
-        return about_game_text.strip()
+        for h2_tag in game_area_description.find_all('h2'):
+            h2_tag.string = f"\033[1m{h2_tag.get_text(strip=True).upper()}\033[0m"
 
+        for strong_tag in game_area_description.find_all('strong'):
+            strong_tag.string = f"\033[1m{strong_tag.get_text(strip=True)}: \033[0m"
+
+        for i_tag in game_area_description.find_all('i'):
+            i_tag.string = f"\033[3m{i_tag.get_text(strip=True)}\033[0m"
+
+        for li_tag in game_area_description.find_all('li'):
+            li_tag.string = f"\u2022 {li_tag.get_text(strip=True)}\n"
+
+        about_game_text = game_area_description.get_text("\n", strip=True)
+        print(about_game_text)
     return None
 
 
