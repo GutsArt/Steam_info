@@ -99,8 +99,9 @@ def get_full_inform(soup):
                    f"\n{genre}"
                    f"\n{franchise if franchise else ''}"
                    f"\n{title_rating if title_rating else ''}")
-
-    get_about_this_game(soup)
+    # !!!!!
+    about_game = get_about_this_game(soup)
+    cost_game= get_cost_game(soup)
 
     save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
                            publisher_info, genre, franchise, title_rating)
@@ -263,7 +264,7 @@ def get_title_rating(soup):
         print(f"Error in {function_name}:\n({e})")
         return None
 
-
+# надо обработать em, b, u, s или strike, sub, sup
 # поиск img, br, li переделать в отдельные сообщения img1 и текс после фото это 1 сообщение,img2 и текс после фото это 2 сообщение и т.д.
 def get_about_this_game(soup):
     game_area_description = soup.find('div', {'id': 'game_area_description'})
@@ -275,7 +276,7 @@ def get_about_this_game(soup):
             h2_tag.string = f"\033[1m{h2_tag.get_text(strip=True).upper()}\033[0m"
 
         for strong_tag in game_area_description.find_all('strong'):
-            strong_tag.string = f"\033[1m{strong_tag.get_text(strip=True)}: \033[0m"
+            strong_tag.string = f"\033[1m{strong_tag.get_text(strip=True)} \033[0m"
 
         for i_tag in game_area_description.find_all('i'):
             i_tag.string = f"\033[3m{i_tag.get_text(strip=True)}\033[0m"
@@ -285,7 +286,33 @@ def get_about_this_game(soup):
 
         about_game_text = game_area_description.get_text("\n", strip=True)
         print(about_game_text)
+        return about_game_text
     return None
+
+def get_cost_game(soup):
+    game_area_description = soup.find('div', {'class': 'discount_final_price'})
+    if game_area_description:
+        cost_game_text = game_area_description.text
+        print(cost_game_text)
+        cost_game_text1 = soup.find('div', {'class': 'discount_original_price'}).text
+        print("\033[9m" + cost_game_text1 + "\033[0m")
+        cost_game_text2 = soup.find('div', {'class': 'discount_pct'}).text
+        print(cost_game_text2)
+        cost_game_text3 = soup.find('p', {'class': 'game_purchase_discount_countdown'}).text
+        print(cost_game_text3)
+        # <div class="game_area_purchase_platform"><span class="platform_img win"></span><span class="platform_img mac"></span><span class="platform_img linux"></span></div>
+        cost_game_text4 = soup.find('div', {'class': 'game_area_purchase_platform'})
+        print(cost_game_text4)
+        return cost_game_text
+    else:
+        game_area_description = soup.find('div', {'class': 'game_purchase_price price'})
+        if game_area_description:
+            cost_game_text = game_area_description.text.strip()
+            print(cost_game_text)
+            return cost_game_text
+        print("No game area description")
+        return None
+
 
 
 def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
