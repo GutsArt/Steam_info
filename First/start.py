@@ -292,9 +292,14 @@ def get_about_this_game(soup):
 def get_cost_game(soup):
     game_area_description = soup.find('div', {'class': 'discount_final_price'})
     if game_area_description:
-        cost_game_text3 = soup.find('p', {'class': 'game_purchase_discount_countdown'}).text
-        special_offer = cost_game_text3.split('!')[0].strip() + "!"
-        print(special_offer)
+        # СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ!
+        cost_game_text3 = soup.find('p', {'class': 'game_purchase_discount_countdown'})
+        if cost_game_text3:
+            cost_game_text3 = cost_game_text3.text
+            special_offer = cost_game_text3.split('!')[0].strip() + "!"
+            print(special_offer)
+        else:
+            print("\033[91mNo game_purchase_discount_countdown\033[0m")
 
         cost_game_text1 = soup.find('div', {'class': 'discount_original_price'}).text
         print("\033[9m" + cost_game_text1 + "\033[0m")
@@ -306,8 +311,25 @@ def get_cost_game(soup):
         print(cost_game_text)
 
         # <div class="game_area_purchase_platform"><span class="platform_img win"></span><span class="platform_img mac"></span><span class="platform_img linux"></span></div>
+        # cost_game_text4 = soup.find('div', {'class': 'game_area_purchase_platform'})
+        # print(cost_game_text4)
+        platform_icons = {
+            "win": "Windows",
+            "mac": "Mac",
+            "linux": "Linux"
+        }
+
         cost_game_text4 = soup.find('div', {'class': 'game_area_purchase_platform'})
-        print(cost_game_text4)
+        platform_tags = cost_game_text4.find_all('span', {'class': 'platform_img'})
+
+        platforms = []
+        for platform_tag in platform_tags:
+            platform_class = platform_tag['class'][1]
+            platform_name = platform_icons.get(platform_class)
+            if platform_name:
+                platforms.append(platform_name)
+
+        print("Поддерживаемые платформы:", ', '.join(platforms))
         return cost_game_text
     else:
         game_area_description = soup.find('div', {'class': 'game_purchase_price price'})
@@ -315,7 +337,7 @@ def get_cost_game(soup):
             cost_game_text = game_area_description.text.strip()
             print(cost_game_text)
             return cost_game_text
-        print("No game area description")
+        print("\033[93mNo game area description\033[0m")
         return None
 
 
