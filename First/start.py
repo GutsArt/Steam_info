@@ -9,14 +9,14 @@ import inspect
 TOKEN = '6857842585:AAFC_LLP4J2lyWtiQV-rWn7GVnhAplVpT0o'
 bot = telebot.TeleBot(TOKEN)
 
-steam_urls = ['https://store.steampowered.com/app/391540/Undertale/',
+steam_urls = ['https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/',
+              'https://store.steampowered.com/app/391540/Undertale/',
               'https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
               'https://store.steampowered.com/app/217980/Dishonored/',
               'https://store.steampowered.com/app/22490/Fallout_New_Vegas/',
               'https://store.steampowered.com/app/238010/Deus_Ex_Human_Revolution__Directors_Cut/',
               'https://store.steampowered.com/app/632470/Disco_Elysium__The_Final_Cut/',
-              'https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/',
               'https://store.steampowered.com/app/1091500/Cyberpunk_2077/',
               'https://store.steampowered.com/app/292030/_3/',
               'https://store.steampowered.com/app/374320/DARK_SOULS_III/',
@@ -101,7 +101,8 @@ def get_full_inform(soup):
                    f"\n{title_rating if title_rating else ''}")
     # !!!!!
     about_game = get_about_this_game(soup)
-    cost_game= get_cost_game(soup)
+    cost_game = get_cost_game(soup)
+    platforms = get_platforms(soup)
 
     save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
                            publisher_info, genre, franchise, title_rating)
@@ -264,6 +265,7 @@ def get_title_rating(soup):
         print(f"Error in {function_name}:\n({e})")
         return None
 
+
 # надо обработать em, b, u, s или strike, sub, sup
 # поиск img, br, li переделать в отдельные сообщения img1 и текс после фото это 1 сообщение,img2 и текс после фото это 2 сообщение и т.д.
 def get_about_this_game(soup):
@@ -289,57 +291,94 @@ def get_about_this_game(soup):
         return about_game_text
     return None
 
+
 def get_cost_game(soup):
-    game_area_description = soup.find('div', {'class': 'discount_final_price'})
-    if game_area_description:
-        # СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ!
-        cost_game_text3 = soup.find('p', {'class': 'game_purchase_discount_countdown'})
-        if cost_game_text3:
-            cost_game_text3 = cost_game_text3.text
-            special_offer = cost_game_text3.split('!')[0].strip() + "!"
-            print(special_offer)
+    try:
+        panel_cost = soup.find('div', {'class': 'game_purchase_action'})
+        print(f"\033[94m{panel_cost}\033[0m")
+        if panel_cost:
+            cost_game = panel_cost.find('div', {'class': 'game_purchase_price price'})
+            if cost_game:
+                cost_game = cost_game.text.strip()
+                print(f"\033[92mPrice: {cost_game}\033[0m")
+            else:
+                discount_original_price = panel_cost.find('div', {'class': 'discount_original_price'})
+                if discount_original_price:
+                    discount_original_price = discount_original_price.text.strip()
+                    print("\033[9m" + discount_original_price + "\033[0m")
+
+                    discount_percentage = panel_cost.find('div', {'class': 'discount_pct'})
+                    discount_percentage = discount_percentage.text.strip()
+                    print(discount_percentage)
+
+                    discount_final_price = panel_cost.find('div', {'class': 'discount_final_price'})
+                    discount_final_price = discount_final_price.text.strip()
+                    print(discount_final_price)
+                else:
+                    print("\033[93mNo information about price\033[0m")
         else:
-            print("\033[91mNo game_purchase_discount_countdown\033[0m")
+            print("\033[93mNo price\033[0m")
 
-        cost_game_text1 = soup.find('div', {'class': 'discount_original_price'}).text
-        print("\033[9m" + cost_game_text1 + "\033[0m")
+            '''
+            # Цена со скидкой во время распродаж
+            
+            game_area_description = soup.find('div', {'class': 'discount_final_price'})
+            if game_area_description:
+                # СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ!
+                cost_game_text3 = soup.find('p', {'class': 'game_purchase_discount_countdown'})
+                print(cost_game_text3)
+                if cost_game_text3:
+                    cost_game_text3 = cost_game_text3.text
+                    special_offer = cost_game_text3.split('!')[0].strip() + "!"
+                    print(special_offer)
+                else:
+                    print("\033[91mNo game_purchase_discount_countdown\033[0m")
 
-        cost_game_text2 = soup.find('div', {'class': 'discount_pct'}).text
-        print(cost_game_text2)
+                    cost_game_text1 = soup.find('div', {'class': 'discount_original_price'})
+                    if cost_game_text1:
+                        cost_game_text1 = cost_game_text1.text
+                        print("\033[9m" + cost_game_text1 + "\033[0m")
 
-        cost_game_text = game_area_description.text
-        print(cost_game_text)
+                        cost_game_text2 = soup.find('div', {'class': 'discount_pct'}).text
+                        print(cost_game_text2)
 
-        # <div class="game_area_purchase_platform"><span class="platform_img win"></span><span class="platform_img mac"></span><span class="platform_img linux"></span></div>
-        # cost_game_text4 = soup.find('div', {'class': 'game_area_purchase_platform'})
-        # print(cost_game_text4)
-        platform_icons = {
-            "win": "Windows",
-            "mac": "Mac",
-            "linux": "Linux"
-        }
-
-        cost_game_text4 = soup.find('div', {'class': 'game_area_purchase_platform'})
-        platform_tags = cost_game_text4.find_all('span', {'class': 'platform_img'})
-
-        platforms = []
-        for platform_tag in platform_tags:
-            platform_class = platform_tag['class'][1]
-            platform_name = platform_icons.get(platform_class)
-            if platform_name:
-                platforms.append(platform_name)
-
-        print("Поддерживаемые платформы:", ', '.join(platforms))
-        return cost_game_text
-    else:
-        game_area_description = soup.find('div', {'class': 'game_purchase_price price'})
-        if game_area_description:
-            cost_game_text = game_area_description.text.strip()
-            print(cost_game_text)
-            return cost_game_text
-        print("\033[93mNo game area description\033[0m")
+                        cost_game_text = game_area_description.text
+                        print(cost_game_text)
+                    else:
+                        print("\033[93mNo game area description\033[0m")
+            '''
+        return None
+    except Exception as e:
+        function_name = inspect.currentframe().f_code.co_name
+        print(f"Error in {function_name}:\n({e})")
         return None
 
+
+def get_platforms(soup):
+    platform_icons = {
+        "win": "Windows",
+        "mac": "Mac",
+        "linux": "Linux"
+    }
+
+    game_platforms = soup.find('div', {'class': 'game_area_purchase_platform'})
+    if game_platforms:
+        platform_tags = game_platforms.find_all('span', {'class': 'platform_img'})
+        if platform_tags:
+
+            platforms = []
+            for platform_tag in platform_tags:
+                platform_class = platform_tag['class'][1]
+                platform_name = platform_icons.get(platform_class)
+                if platform_name:
+                    platforms.append(platform_name)
+
+            print("Поддерживаемые платформы:", ', '.join(platforms))
+        else:
+            print("\033[93mNot platform!!!\033[0m")
+    else:
+        print("\033[93mNo platforms\033[0m")
+    return None
 
 
 def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
