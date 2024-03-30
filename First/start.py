@@ -9,7 +9,8 @@ import inspect
 TOKEN = '6857842585:AAFC_LLP4J2lyWtiQV-rWn7GVnhAplVpT0o'
 bot = telebot.TeleBot(TOKEN)
 
-steam_urls = ['https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/',
+steam_urls = ['https://store.steampowered.com/app/2050650/Resident_Evil_4/',
+              'https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/',
               'https://store.steampowered.com/app/391540/Undertale/',
               'https://store.steampowered.com/app/550/Left_4_Dead_2/',
               'https://store.steampowered.com/app/2124490/SILENT_HILL_2/',
@@ -23,7 +24,6 @@ steam_urls = ['https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/',
               'https://store.steampowered.com/app/1086940/Baldurs_Gate_3/',
               'https://store.steampowered.com/app/1174180/Red_Dead_Redemption_2/',
               'https://store.steampowered.com/app/632470/Disco_Elysium__The_Final_Cut/',
-              'https://store.steampowered.com/app/2050650/Resident_Evil_4/',
               'https://store.steampowered.com/app/1687950/Persona_5_Royal/',
               'https://store.steampowered.com/app/489830/The_Elder_Scrolls_V_Skyrim_Special_Edition/',
               ]
@@ -294,26 +294,54 @@ def get_about_this_game(soup):
 
 def get_cost_game(soup):
     try:
-        panel_cost = soup.find('div', {'class': 'game_purchase_action'})
-        print(f"\033[94m{panel_cost}\033[0m")
-        if panel_cost:
-            cost_game = panel_cost.find('div', {'class': 'game_purchase_price price'})
-            if cost_game:
+        if (panel_cost := soup.find('div', {'class': 'game_purchase_action'})):
+            print(f"\033[94m{panel_cost}\033[0m")
+            if (cost_game := panel_cost.find('div', {'class': 'game_purchase_price price'})):
                 cost_game = cost_game.text.strip()
                 print(f"\033[92mPrice: {cost_game}\033[0m")
-            else:
-                discount_original_price = panel_cost.find('div', {'class': 'discount_original_price'})
-                if discount_original_price:
-                    discount_original_price = discount_original_price.text.strip()
-                    print("\033[9m" + discount_original_price + "\033[0m")
 
-                    discount_percentage = panel_cost.find('div', {'class': 'discount_pct'})
-                    discount_percentage = discount_percentage.text.strip()
-                    print(discount_percentage)
+            elif (discount_original_price := panel_cost.find('div', {'class': 'discount_original_price'})):
+                discount_original_price = discount_original_price.text.strip()
+                print("\033[9m" + discount_original_price + "\033[0m")
 
-                    discount_final_price = panel_cost.find('div', {'class': 'discount_final_price'})
-                    discount_final_price = discount_final_price.text.strip()
-                    print(discount_final_price)
+                discount_percentage = panel_cost.find('div', {'class': 'discount_pct'})
+                discount_percentage = discount_percentage.text.strip()
+                print(discount_percentage)
+
+                discount_final_price = panel_cost.find('div', {'class': 'discount_final_price'})
+                discount_final_price = discount_final_price.text.strip()
+                print(discount_final_price)
+
+            elif (panel_cost.find('div', {'id': 'demoGameBtn'})):
+                # Найти тег 'a' внутри 'div'
+                a_tag = panel_cost.find('a')
+
+                # Получить атрибут 'href'
+                href = a_tag.get('href')
+
+                # Извлечь текст из атрибута 'href'
+                text = href.split(',')[1].strip().replace('"', '')
+
+                print(f"\033[7m{text}\033[0m")  # Выведет: Resident Evil 4 Chainsaw Demo
+
+                if (next_panel_cost := panel_cost.find_next('div', {'class': 'game_purchase_action'})):
+                    if (next_cost_game := next_panel_cost.find('div', {'class': 'game_purchase_price price'})):
+                        next_cost_game = next_cost_game.text.strip()
+                        print(f"\033[6mPrice: {next_cost_game}\033[0m")
+
+                    elif (discount_original_price := next_panel_cost.find('div', {'class': 'discount_original_price'})):
+                        discount_original_price = discount_original_price.text.strip()
+                        print("\033[9m" + discount_original_price + "\033[0m")
+
+                        discount_percentage = next_panel_cost.find('div', {'class': 'discount_pct'})
+                        discount_percentage = discount_percentage.text.strip()
+                        print(discount_percentage)
+
+                        discount_final_price = next_panel_cost.find('div', {'class': 'discount_final_price'})
+                        discount_final_price = discount_final_price.text.strip()
+                        print(discount_final_price)
+                    else:
+                        print("\033[93mError: No information about price\033[0m")
                 else:
                     print("\033[93mNo information about price\033[0m")
         else:
