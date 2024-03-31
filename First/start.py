@@ -9,7 +9,8 @@ import inspect
 TOKEN = '6857842585:AAFC_LLP4J2lyWtiQV-rWn7GVnhAplVpT0o'
 bot = telebot.TeleBot(TOKEN)
 
-steam_urls = ['https://store.steampowered.com/app/2050650/Resident_Evil_4/',
+steam_urls = ['https://store.steampowered.com/app/1139900/Ghostrunner/',
+              'https://store.steampowered.com/app/2050650/Resident_Evil_4/',
               'https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/',
               'https://store.steampowered.com/app/391540/Undertale/',
               'https://store.steampowered.com/app/550/Left_4_Dead_2/',
@@ -344,12 +345,14 @@ def get_cost_game(soup):
                         print("\033[93mError: No information about price\033[0m")
                 else:
                     print("\033[93mNo information about price\033[0m")
+            else:
+                print("\033[93mNo price\033[0m")
         else:
             print("\033[93mNo price\033[0m")
 
             '''
             # Цена со скидкой во время распродаж
-            
+
             game_area_description = soup.find('div', {'class': 'discount_final_price'})
             if game_area_description:
                 # СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ!
@@ -411,18 +414,14 @@ def get_platforms(soup):
 
 def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
                            publisher_info, genre, franchise, title_rating):
-    # Пытаемся загрузить существующий JSON-файл
     try:
         with open("full_info.json", "r", encoding="utf-8") as json_file:
             data = json.load(json_file)
     except FileNotFoundError:
-        # Если файл не найден, создаем новый словарь
         data = {}
 
-    # if "full_name" not in data or data["full_name"] != title:
     if title not in data:
-        # Обновляем словарь с новой информацией
-        data.update({
+        data[title] = {
             "full_name": title,
             "description": description,
             "rating_on_Steam": rating_on_Steam,
@@ -433,22 +432,10 @@ def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacr
             "genre": genre,
             "franchise": franchise,
             "title_rating": title_rating
-        })
+        }
 
-        # Записываем обновленный словарь в JSON-файл с режимом добавления ("a")
-        with open("full_info.json", "a", encoding="utf-8") as json_file:
-            # Переходим на новую строку перед добавлением новой записи
-            json_file.write("\n")
-            json.dump(data, json_file, ensure_ascii=False)
-
-
-def load_data_from_json(file_path):
-    try:
-        with open(file_path, "r", encoding="utf-8") as json_file:
-            data = json.load(json_file)
-        return data
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+        with open("full_info.json", "w", encoding="utf-8") as json_file:
+            json.dump(data, json_file, ensure_ascii=False, indent=4)
 
 
 # Запускаем бота
