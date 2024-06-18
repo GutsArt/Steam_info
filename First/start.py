@@ -100,8 +100,8 @@ def get_full_inform(soup):
                    f"\n{developer_info}"
                    f"\n{publisher_info}"
                    f"\n{genre}"
-                   f"\n{franchise if franchise else ''}"
-                   f"\n{title_rating if title_rating else ''}"
+                   f"{'\n' + franchise if franchise else ''}"
+                   f"{'\n' + title_rating if title_rating else ''}"
                    f"\n{cost_game if cost_game else 'None'}")
     # !!!!!
     about_game = get_about_this_game(soup)
@@ -321,7 +321,8 @@ def get_cost_game(soup):
                 print(discount_final_price)
                 discount_final_price = f"<b><u>{discount_final_price}</u></b>"
 
-                cost_game = f"{discount_final_price}   ({discount_percentage} |{discount_original_price}|)"
+                cost_game = (f"{special_offer + '\n' if special_offer else ''}"
+                             f"{discount_final_price}   ({discount_percentage} |{discount_original_price}|)")
 
             elif (panel_cost.find('div', {'id': 'demoGameBtn'})):
                 # Найти тег 'a' внутри 'div'
