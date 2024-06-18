@@ -103,6 +103,8 @@ def get_full_inform(soup):
                    f"{'\n' + franchise if franchise else ''}"
                    f"{'\n' + title_rating if title_rating else ''}"
                    f"\n{cost_game if cost_game else 'None'}")
+
+    system_requirements = get_system_requirements(soup)
     # !!!!!
     about_game = get_about_this_game(soup)
     platforms = get_platforms(soup)
@@ -407,6 +409,61 @@ def get_cost_game(soup):
                         print("\033[93mNo game area description\033[0m")
             '''
         return None
+    except Exception as e:
+        function_name = inspect.currentframe().f_code.co_name
+        print(f"Error in {function_name}:\n({e})")
+        return None
+
+
+def get_system_requirements(soup):
+    try:
+        list_system_requirements = soup.find('div', {'class': 'sysreq_contents'})
+        if not list_system_requirements:
+            print("System requirements section not found.")
+            return None
+
+        system_requirements = {}
+
+        os_sections = list_system_requirements.find_all('div', {'class': 'game_area_sys_req'})
+
+        for section in os_sections:
+            os_type = section['data-os']
+            requirements = {
+                'minimum': {},
+                'recommended': {}
+            }
+
+            left_col = section.find('div', {'class': 'game_area_sys_req_leftCol'})
+            right_col = section.find('div', {'class': 'game_area_sys_req_rightCol'})
+
+            if left_col:
+                min_title = left_col.find('strong')
+                if min_title and 'Минимальные' in min_title.text:
+                    min_list = min_title.find_next_sibling('ul', {'class': 'bb_ul'})
+                    for li in min_list.find_all('li'):
+                        key_value = li.get_text().split(':', 1)
+                        if len(key_value) == 2:
+                            key, value = key_value
+                            requirements['minimum'][key.strip()] = value.strip()
+
+            if right_col:
+                rec_title = right_col.find('strong')
+                if rec_title and 'Рекомендованные' in rec_title.text:
+                    rec_list = rec_title.find_next_sibling('ul', {'class': 'bb_ul'})
+                    for li in rec_list.find_all('li'):
+                        key_value = li.get_text().split(':', 1)
+                        if len(key_value) == 2:
+                            key, value = key_value
+                            requirements['recommended'][key.strip()] = value.strip()
+
+            system_requirements[os_type] = requirements
+            print(os_type)
+            print(requirements)
+
+        return system_requirements
+
+
+
     except Exception as e:
         function_name = inspect.currentframe().f_code.co_name
         print(f"Error in {function_name}:\n({e})")
