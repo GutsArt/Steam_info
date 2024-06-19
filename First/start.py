@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import telebot
+from telebot import types
 import json
 # для названий функций
 import inspect
@@ -59,9 +60,16 @@ def send_game_info(message):
 
                 full_inform = get_full_inform(soup)
 
+                markup = types.InlineKeyboardMarkup()
+                system_requirements_button = types.InlineKeyboardButton(
+                    text="SYSTEM REQUIREMENTS",
+                    callback_data=f"system|{current_game_index}"
+                )
+                markup.add(system_requirements_button)
+
                 # Отправляем информацию в чат Telegram
                 bot.send_message(message.chat.id, f"{full_inform}", parse_mode='html',
-                                 disable_web_page_preview=True)
+                                 disable_web_page_preview=True, reply_markup=markup)
                 current_game_index += 1
             else:
                 bot.send_message(message.chat.id, f"Error: {response.status_code}")
@@ -110,7 +118,7 @@ def get_full_inform(soup):
     platforms = get_platforms(soup)
 
     save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
-                           publisher_info, genre, franchise, title_rating)
+                           publisher_info, genre, franchise, title_rating,cost_game, system_requirements)
 
     return full_inform
 
@@ -438,7 +446,7 @@ def get_system_requirements(soup):
 
             if left_col:
                 min_title = left_col.find('strong')
-                if min_title and 'Минимальные' in min_title.text:
+                if min_title and ('Минимальные' in min_title.text or 'Minimum' in min_title.text):
                     min_list = min_title.find_next_sibling('ul', {'class': 'bb_ul'})
                     for li in min_list.find_all('li'):
                         key_value = li.get_text().split(':', 1)
@@ -448,7 +456,7 @@ def get_system_requirements(soup):
 
             if right_col:
                 rec_title = right_col.find('strong')
-                if rec_title and 'Рекомендованные' in rec_title.text:
+                if rec_title and ('Recommended' in rec_title.text or 'Рекомендованные' in rec_title.text):
                     rec_list = rec_title.find_next_sibling('ul', {'class': 'bb_ul'})
                     for li in rec_list.find_all('li'):
                         key_value = li.get_text().split(':', 1)
@@ -497,8 +505,53 @@ def get_platforms(soup):
     return None
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith("system|"))
+def send_system_requirements(call):
+    try:
+        parts = call.data.split("|")
+        if len(parts) == 2:
+            game_index = int(parts[1])
+            print(parts)
+
+            steam_url = f'{steam_urls[game_index]}'
+            response = requests.get(steam_url)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                system_requirements = get_system_requirements(soup)
+
+                formatted_requirements = format_requirements(system_requirements)
+
+                bot.send_message(call.message.chat.id, f"System Requirements:\n{formatted_requirements}", parse_mode='html')
+            else:
+                bot.send_message(call.message.chat.id, "Invalid callback data format")
+        # steam_url = f'{steam_urls[current_game_index - 1]}'
+        # response = requests.get(steam_url)
+        # if response.status_code == 200:
+        #     soup = BeautifulSoup(response.text, 'html.parser')
+        #     system_requirements = get_system_requirements(soup)
+        #     bot.send_message(call.message.chat.id, f"System Requirements:\n{system_requirements}", parse_mode='html')
+        # else:
+        #     bot.send_message(call.message.chat.id, f"Error: {response.status_code}")
+    except Exception as e:
+        function_name = inspect.currentframe().f_code.co_name
+        print(f"Error in {function_name}:\n({e})")
+        bot.reply_to(call.message, f"An error occurred: {str(e)}")
+
+
+def format_requirements(requirements):
+    formatted_text = ""
+    for platform, reqs in requirements.items():
+        formatted_text += f"<b>{platform.upper()}</b>\n\n"
+        for level, specs in reqs.items():
+            formatted_text += f"<i>{level.capitalize()}:</i>\n"
+            for key, value in specs.items():
+                formatted_text += f"<b>{key}</b>: {value}\n"
+            formatted_text += "\n"
+    return formatted_text
+
 def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacritic, release_date_info, developer_info,
-                           publisher_info, genre, franchise, title_rating):
+                           publisher_info, genre, franchise, title_rating, cost_game, system_requirements):
     try:
         with open("full_info.json", "r", encoding="utf-8") as json_file:
             data = json.load(json_file)
@@ -516,7 +569,9 @@ def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacr
             "publisher_info": publisher_info,
             "genre": genre,
             "franchise": franchise,
-            "title_rating": title_rating
+            "title_rating": title_rating,
+            "cost_game": cost_game,
+            "system_requirements": system_requirements
         }
 
         with open("full_info.json", "w", encoding="utf-8") as json_file:
@@ -525,4 +580,4 @@ def save_full_name_to_json(title, description, rating_on_Steam, rating_on_Metacr
 
 # Запускаем бота
 if __name__ == '__main__':
-    bot.polling()
+    bot.polling(none_stop=True)
